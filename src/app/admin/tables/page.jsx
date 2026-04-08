@@ -96,22 +96,44 @@ export default function TableManager() {
   };
 
   const addTable = async () => {
+    console.log("Adding table:", newTable, "Current role:", userRole);
+    
     if (userRole !== "owner") {
-      alert("Hanya Owner yang boleh menambah meja!");
+      alert("Hanya Owner yang boleh menambah meja! Periksa akun Anda.");
       return;
     }
-    if (newTable && !tables.includes(newTable)) {
-      const updatedTables = [...tables, newTable].sort((a,b) => parseInt(a) - parseInt(b));
-      try {
-        await updateDoc(doc(db, "config", "tables"), { list: updatedTables });
-        setTables(updatedTables);
-        setNewTable("");
-      } catch (error) {
-        // Fallback for document doesn't exist
-        await setDoc(doc(db, "config", "tables"), { list: updatedTables });
-        setTables(updatedTables);
-        setNewTable("");
-      }
+
+    if (!newTable) {
+      alert("Masukkan nomor meja terlebih dahulu!");
+      return;
+    }
+
+    if (parseInt(newTable) <= 0) {
+      alert("Nomor meja harus lebih besar dari 0!");
+      return;
+    }
+
+    const tableStr = newTable.toString();
+    if (tables.includes(tableStr)) {
+      alert("Meja ini sudah ada!");
+      return;
+    }
+
+    const updatedTables = [...tables, tableStr].sort((a,b) => {
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (isNaN(numA) || isNaN(numB)) return a.localeCompare(b);
+      return numA - numB;
+    });
+
+    try {
+      await setDoc(doc(db, "config", "tables"), { list: updatedTables }, { merge: true });
+      setTables(updatedTables);
+      setNewTable("");
+      alert("Meja #" + tableStr + " berhasil ditambahkan!");
+    } catch (error) {
+      console.error("Error adding table:", error);
+      alert("Gagal menambahkan meja: " + error.message);
     }
   };
 
@@ -120,12 +142,16 @@ export default function TableManager() {
       alert("Hanya Owner yang boleh menghapus meja!");
       return;
     }
+    if (!confirm("Hapus meja #" + table + "?")) return;
+
     const updatedTables = tables.filter((t) => t !== table);
     try {
-      await updateDoc(doc(db, "config", "tables"), { list: updatedTables });
+      await setDoc(doc(db, "config", "tables"), { list: updatedTables }, { merge: true });
       setTables(updatedTables);
+      alert("Meja #" + table + " berhasil dihapus.");
     } catch (error) {
       console.error("Error removing table:", error);
+      alert("Gagal menghapus meja: " + error.message);
     }
   };
 
@@ -292,6 +318,7 @@ export default function TableManager() {
                 <input 
                     type="number" 
                     placeholder="No. Meja"
+                    min="1"
                     value={newTable}
                     onChange={(e) => setNewTable(e.target.value)}
                     className="bg-slate-50 border-3 border-transparent focus:border-orange-500/10 rounded-2xl px-6 py-5 w-full md:w-36 focus:bg-white outline-none transition-all font-black text-xl text-slate-900"
@@ -329,27 +356,36 @@ export default function TableManager() {
                   </button>
                 </div>
 
-                <div className="bg-slate-50 p-8 rounded-[2.5rem] flex items-center justify-center mb-8 border-2 border-dashed border-slate-100 group-hover:border-orange-200 group-hover:bg-white transition-all duration-500">
+                <div className="bg-slate-50 p-8 rounded-[2.5rem] flex items-center justify-center mb-8 border-2 border-dashed border-slate-100 group-hover:border-orange-500/20 group-hover:bg-white transition-all duration-500 relative">
                   <QRCodeSVG 
                     id={`qr-${table}`}
                     value={qrUrl}
-                    size={180}
+                    size={200}
                     level="H"
                     includeMargin={true}
                     fgColor="#0f172a"
+                    imageSettings={{
+                      src: "/logo-kedai.png",
+                      x: undefined,
+                      y: undefined,
+                      height: 40,
+                      width: 40,
+                      excavate: true,
+                    }}
                   />
                 </div>
 
                 <div className="flex gap-3">
                    <button 
                     onClick={() => downloadQR(table)}
-                    className="flex-1 bg-white border-3 border-slate-50 text-slate-900 py-4 rounded-2xl font-black text-sm hover:border-orange-600 hover:text-orange-600 hover:-translate-y-1 shadow-sm transition-all flex items-center justify-center gap-3"
+                    className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-sm hover:bg-orange-600 hover:-translate-y-1 shadow-lg transition-all flex items-center justify-center gap-3"
                    >
-                     <Download size={20} className="stroke-[2.5px]" /> Get Link
+                     <Download size={20} className="stroke-[2.5px]" /> Download PNG
                    </button>
                    <button 
                     onClick={() => window.print()}
-                    className="p-4 bg-slate-50 text-slate-300 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"
+                    className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"
+                    title="Print QR"
                    >
                      <Printer size={20} />
                    </button>

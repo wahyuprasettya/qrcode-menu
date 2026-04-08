@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Settings, Sparkles } from "lucide-react";
+import { ArrowRight, Settings, Sparkles, QrCode, UtensilsCrossed, ShoppingBag, Clock } from "lucide-react";
 
 export default function Home() {
   return (
@@ -47,31 +47,49 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-5">
-            <Link
-              href="/menu?table=12"
-              className="flex items-center justify-between bg-white text-orange-600 p-6 lg:p-8 rounded-[32px] font-black text-xl lg:text-2xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] hover:bg-orange-50 active:scale-95 transition-all w-full group overflow-hidden relative"
-            >
-              <span className="z-10">Buka Menu (Meja 12)</span>
-              <div className="bg-orange-600 text-white p-3 rounded-2xl group-hover:px-6 transition-all z-10">
-                 <ArrowRight />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-50/0 via-orange-50/50 to-orange-50/0 -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
-            </Link>
-
-            <Link
-              href="/admin/tables"
-              className="flex items-center justify-center lg:justify-start gap-4 text-white/70 p-4 rounded-2xl font-black text-sm lg:text-base hover:text-white hover:bg-white/10 transition-all w-full group"
-            >
-              <div className="bg-white/10 p-2 rounded-xl group-hover:rotate-180 transition-transform duration-500">
-                <Settings size={20} />
-              </div>
-              <span>Setup Dashboard (Admin)</span>
-            </Link>
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-orange-200">Tata Cara Pemesanan:</h3>
+            <div className="grid gap-4">
+              {[
+                {
+                  icon: <QrCode className="text-orange-600" />,
+                  title: "Pindai QR",
+                  desc: "Scan QR di meja Anda menggunakan kamera HP"
+                },
+                {
+                  icon: <UtensilsCrossed className="text-orange-600" />,
+                  title: "Pilih Menu",
+                  desc: "Pilih makanan & minuman favorit Anda"
+                },
+                {
+                  icon: <ShoppingBag className="text-orange-600" />,
+                  title: "Checkout",
+                  desc: "Konfirmasi pesanan & masukkan nama Anda"
+                },
+                {
+                  icon: <Clock className="text-orange-600" />,
+                  title: "Sajikan",
+                  desc: "Tunggu & pesanan akan diantar ke meja"
+                }
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-4 bg-white/10 p-4 rounded-3xl backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all group">
+                  <div className="bg-white p-3 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    {step.icon}
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-lg leading-tight">{step.title}</h4>
+                    <p className="text-xs opacity-70 font-medium">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
           </div>
 
           <div className="pt-4 lg:pt-0 opacity-40">
-             <p className="text-[10px] lg:text-[11px] uppercase font-black tracking-[0.5em]">Kedai 123 Tengger &bull; Powered by Wahyu Tech Solution</p>
+             <p className="text-[10px] lg:text-[11px] uppercase font-black tracking-[0.5em]">
+               Kedai 123 Tengger &bull; Powered by <Link href="/admin/tables" className="hover:opacity-70 transition-opacity">Wahyu Tech Solution</Link>
+             </p>
           </div>
         </div>
       </div>
