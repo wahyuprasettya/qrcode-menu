@@ -182,107 +182,131 @@ const MenuPageContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white max-w-2xl mx-auto flex flex-col pb-20 selection:bg-orange-100 selection:text-orange-600 relative">
-      {/* Sticky Premium Header */}
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md z-40 p-4 pb-2 border-b border-gray-50 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-black text-gray-900 leading-tight tracking-tight">
-              Delicious <span className="text-orange-600 italic">Menu</span>
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-               <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                 Meja #{tableNumber}
-              </p>
+    <div className="min-h-screen bg-white selection:bg-orange-100 selection:text-orange-600 relative">
+      <div className="max-w-screen-2xl mx-auto lg:flex lg:gap-8 lg:px-6">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col pb-20 lg:pb-10 relative">
+          {/* Sticky Premium Header */}
+          <header className="sticky top-0 bg-white/95 backdrop-blur-md z-40 p-4 pb-2 border-b border-gray-50 shadow-sm lg:rounded-b-[2rem] lg:mt-4 lg:border lg:px-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col">
+                <h1 className="text-3xl font-black text-gray-900 leading-tight tracking-tight lg:text-4xl">
+                  Delicious <span className="text-orange-600 italic">Menu</span>
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                   <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] lg:text-xs">
+                     Meja #{tableNumber}
+                  </p>
+                </div>
+              </div>
+              <div className="w-14 h-14 bg-orange-50 rounded-[20px] text-orange-600 flex items-center justify-center border border-orange-100 shadow-inner group transition-transform hover:rotate-12 lg:w-16 lg:h-16">
+                <UtensilsCrossed size={28} className="stroke-[2.5px] lg:scale-110" />
+              </div>
             </div>
-          </div>
-          <div className="w-14 h-14 bg-orange-50 rounded-[20px] text-orange-600 flex items-center justify-center border border-orange-100 shadow-inner">
-            <UtensilsCrossed size={28} className="stroke-[2.5px]" />
-          </div>
+
+            {/* Search Bar with focus effects */}
+            <div className="relative group mb-2">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-orange-600 transition-colors" size={20} />
+              <input
+                type="text"
+                placeholder="Cari menu favoritmu..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-orange-500/10 focus:bg-white p-4 pl-12 rounded-2xl outline-none transition-all font-bold text-gray-900 placeholder:text-gray-300 shadow-inner lg:p-5 lg:pl-14"
+              />
+            </div>
+          </header>
+
+          {/* Category Filter Chips */}
+          <CategoryChips 
+            categories={categories} 
+            activeCategory={activeCategory} 
+            onSelect={setActiveCategory} 
+          />
+
+          {/* Item List Area */}
+          <main className="flex-1 mt-2">
+            {error ? (
+              <div className="p-10 text-center flex flex-col items-center">
+                <div className="bg-red-50 text-red-500 p-6 rounded-[32px] border border-red-100 mb-6">
+                   <Sparkles size={48} className="rotate-45" />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 mb-2">Akses Ditolak</h2>
+                <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                  Firestore mengembalikan error: <br/>
+                  <span className="font-mono text-[10px] bg-red-50 text-red-600 p-1 rounded mt-2 inline-block">
+                    {error}
+                  </span>
+                </p>
+                <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100 text-left w-full">
+                   <p className="text-xs font-black text-orange-600 uppercase tracking-widest mb-3">Cara Memperbaiki:</p>
+                   <ul className="text-xs text-orange-700 space-y-2 list-disc pl-4 font-medium">
+                     <li>Periksa <b>Firestore Rules</b> di Firebase Console.</li>
+                     <li>Pastikan rules mengizinkan <b>read</b> publik untuk koleksi 'menu'.</li>
+                     <li>Lihat file <code>firestore.rules.recommendation</code> untuk contoh.</li>
+                   </ul>
+                </div>
+              </div>
+            ) : (
+              <>
+                <MenuList
+                  menus={filteredMenus}
+                  onAddToCart={handleAddToCart}
+                  isLoading={loading}
+                  activeCategory={activeCategory}
+                />
+                {!loading && menus.length === 0 && (
+                  <div className="px-10 pb-20 -mt-20 flex flex-col items-center">
+                     <button 
+                      onClick={handleSeed}
+                      disabled={isSeeding}
+                      className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-orange-100 hover:bg-orange-700 active:scale-95 transition-all disabled:opacity-50"
+                     >
+                       {isSeeding ? "Sedang Menambah..." : "Isi Data Menu Contoh"}
+                     </button>
+                     <p className="text-[10px] text-gray-300 font-bold mt-4 uppercase tracking-widest">
+                       Klik untuk mengisi database yang kosong
+                     </p>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
         </div>
 
-        {/* Search Bar with focus effects */}
-        <div className="relative group mb-2">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-orange-600 transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Cari menu favoritmu..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-gray-50 border-2 border-transparent focus:border-orange-500/10 focus:bg-white p-4 pl-12 rounded-2xl outline-none transition-all font-bold text-gray-900 placeholder:text-gray-300 shadow-inner"
+        {/* Sidebar Cart for Desktop / Modal for Mobile */}
+        <aside className="hidden lg:block w-96 sticky top-4 h-[calc(100vh-2rem)] py-4 overflow-y-auto no-scrollbar">
+          <Cart
+            cart={cart}
+            customerName={customerName}
+            setCustomerName={setCustomerName}
+            notes={notes}
+            setNotes={setNotes}
+            onUpdateQty={updateCartQty}
+            onRemove={removeFromCart}
+            onCheckout={handleCheckout}
+            tableNumber={tableNumber}
+            isSidebar={true}
+          />
+        </aside>
+
+        {/* Mobile Cart Component */}
+        <div className="lg:hidden">
+          <Cart
+            cart={cart}
+            customerName={customerName}
+            setCustomerName={setCustomerName}
+            notes={notes}
+            setNotes={setNotes}
+            onUpdateQty={updateCartQty}
+            onRemove={removeFromCart}
+            onCheckout={handleCheckout}
+            tableNumber={tableNumber}
+            isSidebar={false}
           />
         </div>
-      </header>
-
-      {/* Category Filter Chips */}
-      <CategoryChips 
-        categories={categories} 
-        activeCategory={activeCategory} 
-        onSelect={setActiveCategory} 
-      />
-
-      {/* Item List Area */}
-      <main className="flex-1 mt-2">
-        {error ? (
-          <div className="p-10 text-center flex flex-col items-center">
-            <div className="bg-red-50 text-red-500 p-6 rounded-[32px] border border-red-100 mb-6">
-               <Sparkles size={48} className="rotate-45" />
-            </div>
-            <h2 className="text-xl font-black text-gray-900 mb-2">Akses Ditolak</h2>
-            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-              Firestore mengembalikan error: <br/>
-              <span className="font-mono text-[10px] bg-red-50 text-red-600 p-1 rounded mt-2 inline-block">
-                {error}
-              </span>
-            </p>
-            <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100 text-left w-full">
-               <p className="text-xs font-black text-orange-600 uppercase tracking-widest mb-3">Cara Memperbaiki:</p>
-               <ul className="text-xs text-orange-700 space-y-2 list-disc pl-4 font-medium">
-                 <li>Periksa <b>Firestore Rules</b> di Firebase Console.</li>
-                 <li>Pastikan rules mengizinkan <b>read</b> publik untuk koleksi 'menu'.</li>
-                 <li>Lihat file <code>firestore.rules.recommendation</code> untuk contoh.</li>
-               </ul>
-            </div>
-          </div>
-        ) : (
-          <>
-            <MenuList
-              menus={filteredMenus}
-              onAddToCart={handleAddToCart}
-              isLoading={loading}
-              activeCategory={activeCategory}
-            />
-            {!loading && menus.length === 0 && (
-              <div className="px-10 pb-20 -mt-20 flex flex-col items-center">
-                 <button 
-                  onClick={handleSeed}
-                  disabled={isSeeding}
-                  className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-orange-100 hover:bg-orange-700 active:scale-95 transition-all disabled:opacity-50"
-                 >
-                   {isSeeding ? "Sedang Menambah..." : "Isi Data Menu Contoh"}
-                 </button>
-                 <p className="text-[10px] text-gray-300 font-bold mt-4 uppercase tracking-widest">
-                   Klik untuk mengisi database yang kosong
-                 </p>
-              </div>
-            )}
-          </>
-        )}
-      </main>
-
-      {/* Simple Cart Control */}
-      <Cart
-        cart={cart}
-        customerName={customerName}
-        setCustomerName={setCustomerName}
-        notes={notes}
-        setNotes={setNotes}
-        onUpdateQty={updateCartQty}
-        onRemove={removeFromCart}
-        onCheckout={handleCheckout}
-        tableNumber={tableNumber}
-      />
+      </div>
     </div>
   );
 };

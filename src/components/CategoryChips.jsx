@@ -22,7 +22,7 @@ const CategoryChips = ({ categories, activeCategory, onSelect }) => {
   }, [activeCategory]);
 
   return (
-    <div className="sticky top-[96px] bg-white/80 backdrop-blur-xl z-30 py-6 px-4 -mx-4 border-b border-slate-50 overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.02)]">
+    <div className="sticky top-[108px] lg:top-[130px] bg-white/80 backdrop-blur-xl z-30 py-4 lg:py-6 px-4 border-b border-slate-50 overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.02)] lg:rounded-2xl lg:mx-0 lg:mt-2">
       <div 
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth px-4"
