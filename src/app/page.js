@@ -12,7 +12,7 @@ export default function Home() {
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20 z-10">
         {/* QR Visual Card */}
         <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-[0_40px_100px_rgba(0,0,0,0.2)] animate-in zoom-in duration-1000 relative group transition-all hover:scale-[1.02] hover:-rotate-2">
-          <div className="bg-orange-50 border-4 border-orange-100 p-8 lg:p-12 rounded-[36px] relative flex items-center justify-center">
+          <div className="p-8 lg:p-12 rounded-[36px] relative flex items-center justify-center">
              <div className="absolute -top-6 -right-6 bg-orange-600 text-white p-4 rounded-2xl shadow-xl ring-8 ring-white animate-bounce-slow">
                <Sparkles size={32} />
              </div>

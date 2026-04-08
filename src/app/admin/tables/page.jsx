@@ -11,7 +11,7 @@ import {
   signOut,
   createUserWithEmailAndPassword
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 export default function TableManager() {
   const [user, setUser] = useState(null);
@@ -24,9 +24,10 @@ export default function TableManager() {
   const [loginError, setLoginError] = useState("");
   
   // Table states
-  const [tables, setTables] = useState(["1", "2", "3", "4", "5"]);
+  const [tables, setTables] = useState([]);
   const [newTable, setNewTable] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
+  const [tablesLoading, setTablesLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -45,9 +46,27 @@ export default function TableManager() {
           console.error("Error fetching role:", error);
           setUserRole("kasir");
         }
+        
+        // Fetch tables from Firestore
+        try {
+          const configDoc = await getDoc(doc(db, "config", "tables"));
+          if (configDoc.exists()) {
+            setTables(configDoc.data().list || []);
+          } else {
+            // New system, create initial tables
+            const defaultTables = ["1", "2", "3", "4", "5"];
+            await setDoc(doc(db, "config", "tables"), { list: defaultTables });
+            setTables(defaultTables);
+          }
+        } catch (error) {
+          console.error("Error fetching tables:", error);
+        } finally {
+          setTablesLoading(false);
+        }
       } else {
         setUser(null);
         setUserRole(null);
+        setTablesLoading(false);
       }
       setLoading(false);
     });
@@ -76,23 +95,38 @@ export default function TableManager() {
     signOut(auth);
   };
 
-  const addTable = () => {
+  const addTable = async () => {
     if (userRole !== "owner") {
       alert("Hanya Owner yang boleh menambah meja!");
       return;
     }
     if (newTable && !tables.includes(newTable)) {
-      setTables([...tables, newTable].sort((a,b) => parseInt(a) - parseInt(b)));
-      setNewTable("");
+      const updatedTables = [...tables, newTable].sort((a,b) => parseInt(a) - parseInt(b));
+      try {
+        await updateDoc(doc(db, "config", "tables"), { list: updatedTables });
+        setTables(updatedTables);
+        setNewTable("");
+      } catch (error) {
+        // Fallback for document doesn't exist
+        await setDoc(doc(db, "config", "tables"), { list: updatedTables });
+        setTables(updatedTables);
+        setNewTable("");
+      }
     }
   };
 
-  const removeTable = (table) => {
+  const removeTable = async (table) => {
     if (userRole !== "owner") {
       alert("Hanya Owner yang boleh menghapus meja!");
       return;
     }
-    setTables(tables.filter((t) => t !== table));
+    const updatedTables = tables.filter((t) => t !== table);
+    try {
+      await updateDoc(doc(db, "config", "tables"), { list: updatedTables });
+      setTables(updatedTables);
+    } catch (error) {
+      console.error("Error removing table:", error);
+    }
   };
 
   const downloadQR = (tableId) => {

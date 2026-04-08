@@ -7,26 +7,28 @@ import { X, Plus, Minus, Send, ShoppingBag, UtensilsCrossed, User, MessageSquare
 /**
  * Premium Cart with Name, Table, and Notes input.
  */
-const Cart = ({ 
+/**
+ * Unified Cart Content component moved outside to prevent focus loss on re-render.
+ */
+const CartContent = ({ 
+  showClose = true, 
+  embedded = false, 
   cart, 
   onUpdateQty, 
   onRemove, 
   onCheckout, 
   tableNumber, 
   customerName, 
-  setCustomerName,
-  notes,
-  setNotes,
-  isSidebar = false // New prop
+  setCustomerName, 
+  notes, 
+  setNotes, 
+  setIsOpen 
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   const total = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   }, [cart]);
 
-  // Unified Cart Content
-  const CartContent = ({ showClose = true, embedded = false }) => (
+  return (
     <div className={`flex flex-col ${embedded ? 'h-full' : 'bg-white p-8 pb-10 rounded-t-[4rem] shadow-[0_-20px_100px_rgba(0,0,0,0.3)] max-w-2xl mx-auto max-h-[92vh]'} overflow-y-auto no-scrollbar`}>
       {/* Modal Header */}
       <div className={`flex items-center justify-between mb-10 border-b border-slate-50 pb-6 sticky top-0 ${embedded ? 'bg-white/80' : 'bg-white/95'} backdrop-blur-md z-10 ${embedded ? '-mx-4 px-4' : '-mx-8 px-8'} pt-2`}>
@@ -150,6 +152,26 @@ const Cart = ({
       </div>
     </div>
   );
+};
+
+const Cart = ({ 
+  cart, 
+  onUpdateQty, 
+  onRemove, 
+  onCheckout, 
+  tableNumber, 
+  customerName, 
+  setCustomerName,
+  notes,
+  setNotes,
+  isSidebar = false // New prop
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const total = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  }, [cart]);
+
 
   if (cart.length === 0 && !isSidebar) return null;
   
@@ -162,7 +184,20 @@ const Cart = ({
             <p className="font-black uppercase tracking-widest text-xs">Keranjang Kosong</p>
           </div>
         ) : (
-          <CartContent showClose={false} embedded={true} />
+          <CartContent 
+            showClose={false} 
+            embedded={true} 
+            cart={cart}
+            onUpdateQty={onUpdateQty}
+            onRemove={onRemove}
+            onCheckout={onCheckout}
+            tableNumber={tableNumber}
+            customerName={customerName}
+            setCustomerName={setCustomerName}
+            notes={notes}
+            setNotes={setNotes}
+            setIsOpen={setIsOpen}
+          />
         )}
       </div>
     );
@@ -205,7 +240,20 @@ const Cart = ({
             onClick={() => setIsOpen(false)}
           />
           <div className="fixed bottom-0 left-0 right-0 bg-white z-[60] animate-in slide-in-from-bottom duration-700">
-             <CartContent showClose={true} embedded={false} />
+             <CartContent 
+               showClose={true} 
+               embedded={false} 
+               cart={cart}
+               onUpdateQty={onUpdateQty}
+               onRemove={onRemove}
+               onCheckout={onCheckout}
+               tableNumber={tableNumber}
+               customerName={customerName}
+               setCustomerName={setCustomerName}
+               notes={notes}
+               setNotes={setNotes}
+               setIsOpen={setIsOpen}
+             />
           </div>
         </>
       )}
