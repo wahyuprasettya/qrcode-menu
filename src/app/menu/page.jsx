@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import {
   collection,
   onSnapshot,
@@ -14,7 +15,7 @@ import { db } from "@/lib/firebase";
 import MenuList from "@/components/MenuList";
 import Cart from "@/components/Cart";
 import CategoryChips from "@/components/CategoryChips";
-import { CheckCircle2, ChevronLeft, Search, UtensilsCrossed, Sparkles } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Search, Sparkles } from "lucide-react";
 
 /**
  * Main QR Menu Page with premium aesthetic.
@@ -190,8 +191,8 @@ const MenuPageContent = () => {
           <header className="sticky top-0 bg-white/95 backdrop-blur-md z-40 p-4 pb-2 border-b border-gray-50 shadow-sm lg:rounded-b-[2rem] lg:mt-4 lg:border lg:px-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col">
-                <h1 className="text-3xl font-black text-gray-900 leading-tight tracking-tight lg:text-4xl">
-                  Delicious <span className="text-orange-600 italic">Menu</span>
+                <h1 className="text-2xl font-black text-gray-900 leading-tight tracking-tight lg:text-3xl">
+                  Kedai <span className="text-orange-600">123</span> <span className="text-orange-600">Tengger</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                    <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -200,8 +201,14 @@ const MenuPageContent = () => {
                   </p>
                 </div>
               </div>
-              <div className="w-14 h-14 bg-orange-50 rounded-[20px] text-orange-600 flex items-center justify-center border border-orange-100 shadow-inner group transition-transform hover:rotate-12 lg:w-16 lg:h-16">
-                <UtensilsCrossed size={28} className="stroke-[2.5px] lg:scale-110" />
+              <div className="w-14 h-14 bg-orange-50 rounded-[20px] flex items-center justify-center border border-orange-100 shadow-inner group transition-transform hover:rotate-12 lg:w-16 lg:h-16 overflow-hidden p-1">
+                <Image
+                  src="/logo-kedai.png"
+                  alt="Kedai 123 Tengger"
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </div>
 
