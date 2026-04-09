@@ -31,9 +31,13 @@ Aplikasi ini memungkinkan pelanggan untuk memindai kode QR di meja, melihat menu
    - `image` (string/url)
 2. **`orders`**:
    - `tableNumber` (string)
+   - `customerName` (string)
    - `items` (array of objects context: `{name, price, qty, subtotal}`)
    - `total` (number)
+   - `notes` (string)
    - `status` (string: "pending")
+   - `isBookingTable` (boolean: default false, true ketika transaksi dikirim - status booking meja)
+   - `orderFromTable` (boolean: default false, true untuk pesanan web/QR meja, false untuk kasir/app)
    - `createdAt` (timestamp)
 
 > [!TIP]

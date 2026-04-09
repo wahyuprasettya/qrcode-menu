@@ -105,6 +105,8 @@ const MenuPageContent = () => {
         })),
         total,
         status: "pending",
+        isBookingTable: true,
+        orderFromTable: true,
         createdAt: serverTimestamp(),
       };
 
