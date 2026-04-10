@@ -44,22 +44,30 @@ const MenuPageContent = () => {
 
   // Realtime menu fetch filtered by ownerId
   useEffect(() => {
-    if (!ownerId) {
-      setLoading(false);
-      return;
+    let q;
+    if (ownerId) {
+      // If ownerId exists, strictly filter by it
+      // Removed orderBy to avoid requiring a composite index immediately
+      q = query(
+        collection(db, "menu"), 
+        where("userId", "==", ownerId)
+      );
+    } else {
+      // Fallback for demo: show public items or anything if no ownerId
+      q = query(
+        collection(db, "menu"),
+        orderBy("name", "asc")
+      );
     }
-
-    const q = query(
-      collection(db, "menu"), 
-      where("userId", "==", ownerId),
-      orderBy("name", "asc")
-    );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      
+      // If filtering by ownerId yielded nothing, but there are items in the DB,
+      // maybe they aren't tagged yet. We'll show them as a fallback if ownerId is missing.
       setMenus(data);
       setLoading(false);
       setError(null);
@@ -107,6 +115,12 @@ const MenuPageContent = () => {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
+    // VALIDATION: Ensure ownerId is present so the order is linked to a restaurant
+    if (!ownerId || ownerId === "null" || ownerId === "public" || ownerId === "undefined") {
+      alert("⚠️ QR Code atau Link tidak valid (ID Toko tidak ditemukan). Silakan hubungi kasir atau scan ulang QR Code yang tersedia di meja.");
+      return;
+    }
+
     try {
       const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -145,7 +159,7 @@ const MenuPageContent = () => {
     setIsSeeding(true);
     try {
       const { seedMenu } = await import("@/utils/seedData");
-      await seedMenu();
+      await seedMenu(ownerId);
       alert("Data menu berhasil ditambahkan!");
     } catch (err) {
       console.error("Seed Error:", err);

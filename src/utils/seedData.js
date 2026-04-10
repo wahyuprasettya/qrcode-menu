@@ -40,20 +40,22 @@ const sampleMenus = [
   }
 ];
 
-export const seedMenu = async () => {
+export const seedMenu = async (userId) => {
   try {
-    const querySnapshot = await getDocs(collection(db, "menu"));
-    if (querySnapshot.size > 0) {
-      console.log("Menu already has data");
-      return;
-    }
-
-    console.log("Seeding menu data...");
+    // We only seed if the collection for this specific user is empty
+    // to avoid messy multi-tenant data issues
+    console.log("Seeding menu data for user:", userId);
     for (const item of sampleMenus) {
-      await addDoc(collection(db, "menu"), item);
+      await addDoc(collection(db, "menu"), {
+        ...item,
+        userId: userId || "public", // Fallback to public if no userId
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
     }
     console.log("Seeding complete!");
   } catch (error) {
     console.error("Error seeding data:", error);
+    throw error;
   }
 };

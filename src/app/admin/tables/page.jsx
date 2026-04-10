@@ -47,15 +47,18 @@ export default function TableManager() {
           setUserRole("kasir");
         }
         
-        // Fetch tables from Firestore
+        // Fetch tables from Firestore (Scoped to the current logged-in user)
         try {
-          const configDoc = await getDoc(doc(db, "config", "tables"));
-          if (configDoc.exists()) {
-            setTables(configDoc.data().list || []);
+          const tablesDoc = await getDoc(doc(db, "users", currentUser.uid, "settings", "tables"));
+          if (tablesDoc.exists()) {
+            setTables(tablesDoc.data().list || []);
           } else {
-            // New system, create initial tables
+            // New system for this user, create initial tables
             const defaultTables = ["1", "2", "3", "4", "5"];
-            await setDoc(doc(db, "config", "tables"), { list: defaultTables });
+            await setDoc(doc(db, "users", currentUser.uid, "settings", "tables"), { 
+              list: defaultTables,
+              updatedAt: new Date().toISOString() 
+            });
             setTables(defaultTables);
           }
         } catch (error) {
@@ -127,7 +130,14 @@ export default function TableManager() {
     });
 
     try {
-      await setDoc(doc(db, "config", "tables"), { list: updatedTables }, { merge: true });
+      await setDoc(
+        doc(db, "users", user.uid, "settings", "tables"), 
+        { 
+          list: updatedTables,
+          updatedAt: new Date().toISOString()
+        }, 
+        { merge: true }
+      );
       setTables(updatedTables);
       setNewTable("");
       alert("Meja #" + tableStr + " berhasil ditambahkan!");
@@ -146,7 +156,14 @@ export default function TableManager() {
 
     const updatedTables = tables.filter((t) => t !== table);
     try {
-      await setDoc(doc(db, "config", "tables"), { list: updatedTables }, { merge: true });
+      await setDoc(
+        doc(db, "users", user.uid, "settings", "tables"), 
+        { 
+          list: updatedTables,
+          updatedAt: new Date().toISOString()
+        }, 
+        { merge: true }
+      );
       setTables(updatedTables);
       alert("Meja #" + table + " berhasil dihapus.");
     } catch (error) {

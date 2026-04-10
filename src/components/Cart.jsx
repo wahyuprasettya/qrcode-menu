@@ -136,16 +136,23 @@ const CartContent = ({
         </div>
         
         <button
-          disabled={!customerName.trim()}
           onClick={onCheckout}
-          className="w-full bg-orange-600 text-white font-black h-20 rounded-[2rem] shadow-xl shadow-orange-100 flex items-center justify-center gap-4 hover:bg-orange-700 transition-all active:scale-95 text-lg disabled:bg-slate-100 disabled:shadow-none disabled:text-slate-300"
+          disabled={!customerName.trim()}
+          className={`w-full font-black h-20 rounded-[2rem] shadow-xl flex items-center justify-center gap-4 transition-all active:scale-95 text-lg ${
+            !customerName.trim() 
+              ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none" 
+              : "bg-orange-600 text-white shadow-orange-100 hover:bg-orange-700"
+          }`}
         >
           {!customerName.trim() ? (
-             <span className="uppercase tracking-widest text-[10px]">Isi Nama Pemesan</span>
+             <div className="flex flex-col items-center">
+                <span className="uppercase tracking-widest text-[10px] opacity-70">Lengkapi Data</span>
+                <span className="text-sm">Isi Nama Pemesan</span>
+             </div>
           ) : (
             <>
               <Send size={20} className="stroke-[3px]" />
-              Kirim Order
+              Kirim Order Sekarang
             </>
           )}
         </button>
@@ -226,7 +233,7 @@ const Cart = ({
               </div>
             </div>
             <div className="bg-white/10 px-4 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 group-hover:bg-white/20 transition-all uppercase tracking-widest">
-               <span>Liat Pesanan</span>
+               <span>Konfirmasi Pesanan</span>
                <Send size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
             </div>
           </button>
