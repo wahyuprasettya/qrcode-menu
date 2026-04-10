@@ -337,7 +337,7 @@ export default function TableManager() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {tables.map((table) => {
-            const qrUrl = `${baseUrl}/menu?table=${table}`;
+            const qrUrl = `${baseUrl}/menu?table=${table}&ownerId=${user.uid}`;
             return (
               <div key={table} className="bg-white p-8 rounded-[3.5rem] border border-slate-50 shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all group overflow-hidden relative">
                 <div className="flex justify-between items-start mb-8">

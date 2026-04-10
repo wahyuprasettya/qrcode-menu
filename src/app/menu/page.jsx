@@ -9,6 +9,7 @@ import {
   addDoc,
   serverTimestamp,
   query,
+  where,
   orderBy,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -23,6 +24,7 @@ import { CheckCircle2, ChevronLeft, Search, Sparkles } from "lucide-react";
 const MenuPageContent = () => {
   const searchParams = useSearchParams();
   const tableNumber = searchParams.get("table") || "Tanpa Meja";
+  const ownerId = searchParams.get("ownerId"); // CRITICAL: Link to restaurant
 
   const [menus, setMenus] = useState([]);
   const [cart, setCart] = useState([]);
@@ -40,9 +42,19 @@ const MenuPageContent = () => {
     return [...new Set(menus.map((item) => item.category).filter(Boolean))];
   }, [menus]);
 
-  // Realtime menu fetch
+  // Realtime menu fetch filtered by ownerId
   useEffect(() => {
-    const q = query(collection(db, "menu"), orderBy("name", "asc"));
+    if (!ownerId) {
+      setLoading(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, "menu"), 
+      where("userId", "==", ownerId),
+      orderBy("name", "asc")
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -53,12 +65,17 @@ const MenuPageContent = () => {
       setError(null);
     }, (err) => {
       console.error("Firestore Listen Error:", err);
-      setError(err.message);
+      // Fallback for missing index during development
+      if (err.code === 'failed-precondition') {
+          setError("Index Firestore diperlukan. Silakan cek Firebase Console.");
+      } else {
+          setError(err.message);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [ownerId]);
 
   const handleAddToCart = (item) => {
     setCart((prev) => {
@@ -94,10 +111,14 @@ const MenuPageContent = () => {
       const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
       const orderData = {
+        userId: ownerId, // Main filter for POS
+        uid: ownerId,    // Added as requested for compatibility
+        tableId: tableNumber, // Match Expo's OrderRecord type
         tableNumber,
         customerName: customerName || "Pelanggan",
         notes: notes || "",
         items: cart.map(({ id, name, price, qty }) => ({
+          id, // Ensure ID is passed for cart items
           name,
           price,
           qty,
@@ -105,8 +126,10 @@ const MenuPageContent = () => {
         })),
         total,
         status: "pending",
+        paymentStatus: "pending", // Ensure consistency
         isBookingTable: true,
         orderFromTable: true,
+        orderSource: "web", // Explicitly mark as web order
         createdAt: serverTimestamp(),
       };
 
@@ -194,23 +217,21 @@ const MenuPageContent = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col">
                 <h1 className="text-2xl font-black text-gray-900 leading-tight tracking-tight lg:text-3xl">
-                  Kedai <span className="text-orange-600">123</span> <span className="text-orange-600">Tengger</span>
+                  Kedai <span className="text-orange-600">Digital</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                   <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                   {ownerId ? (
+                     <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                   ) : (
+                     <span className="h-2 w-2 rounded-full bg-red-500" />
+                   )}
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] lg:text-xs">
-                     Meja #{tableNumber}
+                     {ownerId ? `Meja #${tableNumber}` : "ID Toko Tidak Ditemukan"}
                   </p>
                 </div>
               </div>
               <div className="w-14 h-14 bg-orange-50 rounded-[20px] flex items-center justify-center border border-orange-100 shadow-inner group transition-transform hover:rotate-12 lg:w-16 lg:h-16 overflow-hidden p-1">
-                <Image
-                  src="/logo-kedai.png"
-                  alt="Kedai 123 Tengger"
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain"
-                />
+                <div className="text-2xl">🏪</div>
               </div>
             </div>
 
