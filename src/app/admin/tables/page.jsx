@@ -28,6 +28,10 @@ export default function TableManager() {
   const [newTable, setNewTable] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [tablesLoading, setTablesLoading] = useState(true);
+  
+  // Bulk states
+  const [bulkStart, setBulkStart] = useState("1");
+  const [bulkEnd, setBulkEnd] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -144,6 +148,53 @@ export default function TableManager() {
     } catch (error) {
       console.error("Error adding table:", error);
       alert("Gagal menambahkan meja: " + error.message);
+    }
+  };
+
+  const generateBulk = async () => {
+    if (userRole !== "owner") {
+      alert("Hanya Owner yang boleh membuat meja massal!");
+      return;
+    }
+
+    const start = parseInt(bulkStart);
+    const end = parseInt(bulkEnd);
+
+    if (isNaN(start) || isNaN(end) || start <= 0 || end <= 0 || end < start) {
+      alert("Masukkan range meja yang valid! (Contoh: 1 sampai 10)");
+      return;
+    }
+
+    if (end - start > 50) {
+      alert("Maksimal generate 50 meja sekaligus untuk menjaga performa.");
+      return;
+    }
+
+    if (!confirm(`Generate meja dari #${start} sampai #${end}? Ini akan menggabungkan dengan meja yang sudah ada.`)) return;
+
+    const newRange = Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
+    const updatedTables = Array.from(new Set([...tables, ...newRange])).sort((a,b) => {
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (isNaN(numA) || isNaN(numB)) return a.localeCompare(b);
+      return numA - numB;
+    });
+
+    try {
+      await setDoc(
+        doc(db, "users", user.uid, "settings", "tables"), 
+        { 
+          list: updatedTables,
+          updatedAt: new Date().toISOString()
+        }, 
+        { merge: true }
+      );
+      setTables(updatedTables);
+      setBulkEnd("");
+      alert("Berhasil membuat " + (end - start + 1) + " meja baru!");
+    } catch (error) {
+      console.error("Error bulk generating:", error);
+      alert("Gagal generate: " + error.message);
     }
   };
 
@@ -304,6 +355,39 @@ export default function TableManager() {
   // AUTHORIZED OWNER VIEW
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-12 mb-20 selection:bg-orange-100">
+      <style jsx global>{`
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-section, .print-section * {
+                visibility: visible;
+            }
+            .print-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 20px !important;
+                padding: 20px !important;
+                background: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .qr-card-print {
+                border: 1px solid #eee !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+      `}</style>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-12">
             <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-600 transition-colors font-bold text-sm">
@@ -324,40 +408,81 @@ export default function TableManager() {
             </div>
         </div>
         
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 bg-white p-10 rounded-[3rem] border border-slate-50 shadow-xl shadow-slate-200/40 relative overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4">Table <span className="text-orange-600">Setup</span></h1>
-            <p className="text-slate-400 font-bold max-w-sm">Siapkan barcode unik untuk setiap meja pelanggan Anda secara instan.</p>
-          </div>
-          
-          <div className="flex gap-4 relative z-10 w-full md:w-auto">
-            <div className="relative flex-1 md:flex-none">
-                <input 
-                    type="number" 
-                    placeholder="No. Meja"
-                    min="1"
-                    value={newTable}
-                    onChange={(e) => setNewTable(e.target.value)}
-                    className="bg-slate-50 border-3 border-transparent focus:border-orange-500/10 rounded-2xl px-6 py-5 w-full md:w-36 focus:bg-white outline-none transition-all font-black text-xl text-slate-900"
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 no-print">
+            {/* Manual Add Card */}
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-50 shadow-xl shadow-slate-200/40 relative overflow-hidden">
+                <div className="relative z-10">
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Manual Add</h2>
+                    <p className="text-slate-400 font-bold text-sm mb-6">Tambah satu meja spesifik.</p>
+                    <div className="flex gap-4">
+                        <input 
+                            type="number" 
+                            placeholder="No. Meja"
+                            value={newTable}
+                            onChange={(e) => setNewTable(e.target.value)}
+                            className="bg-slate-50 border-3 border-transparent focus:border-orange-500/10 rounded-2xl px-6 py-4 w-full focus:bg-white outline-none transition-all font-black text-slate-900"
+                        />
+                        <button 
+                            onClick={addTable}
+                            className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black hover:bg-orange-600 transition-all flex items-center gap-3 shrink-0"
+                        >
+                            <Plus size={20} strokeWidth={3} /> ADD
+                        </button>
+                    </div>
+                </div>
             </div>
-            <button 
-              onClick={addTable}
-              className="bg-slate-900 text-white px-8 py-5 rounded-2xl font-black text-lg hover:bg-orange-600 hover:-translate-y-1 transition-all shadow-xl shadow-slate-200 active:scale-95 flex items-center gap-3"
-            >
-              <Plus size={24} strokeWidth={3} />
-            </button>
-          </div>
-          
-          <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0"></div>
+
+            {/* Bulk Generate Card */}
+            <div className="bg-orange-600 p-10 rounded-[3rem] shadow-xl shadow-orange-100 relative overflow-hidden">
+                <div className="relative z-10">
+                    <h2 className="text-2xl font-black text-white mb-2">Mass Generate</h2>
+                    <p className="text-orange-100 font-bold text-sm mb-6">Buat banyak meja sekaligus (Range).</p>
+                    <div className="flex gap-4 items-center">
+                        <input 
+                            type="number" 
+                            placeholder="DARI"
+                            value={bulkStart}
+                            onChange={(e) => setBulkStart(e.target.value)}
+                            className="bg-white/10 border-3 border-transparent focus:border-white/20 rounded-2xl px-4 py-4 w-full focus:bg-white/20 outline-none transition-all font-black text-white placeholder:text-white/40"
+                        />
+                        <span className="text-white font-black">TO</span>
+                        <input 
+                            type="number" 
+                            placeholder="SAMPAI"
+                            value={bulkEnd}
+                            onChange={(e) => setBulkEnd(e.target.value)}
+                            className="bg-white/10 border-3 border-transparent focus:border-white/20 rounded-2xl px-4 py-4 w-full focus:bg-white/20 outline-none transition-all font-black text-white placeholder:text-white/40"
+                        />
+                        <button 
+                            onClick={generateBulk}
+                            className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black hover:scale-105 transition-all flex items-center gap-3 shrink-0"
+                        >
+                            GENERATE
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="flex items-center justify-between mb-8 no-print">
+            <div>
+                <h2 className="text-2xl font-black text-slate-900">Total {tables.length} Meja</h2>
+                <p className="text-slate-400 font-bold text-sm">Download atau Cetak barcode meja Anda.</p>
+            </div>
+            <button 
+                onClick={() => window.print()}
+                className="bg-slate-900 text-white px-8 py-4 rounded-[2rem] font-black hover:bg-emerald-600 transition-all flex items-center gap-3"
+            >
+                <Printer size={20} /> CETAK SEMUA MEJA
+            </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 print-section">
           {tables.map((table) => {
             const qrUrl = `${baseUrl}/menu?table=${table}&ownerId=${user.uid}`;
             return (
-              <div key={table} className="bg-white p-8 rounded-[3.5rem] border border-slate-50 shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all group overflow-hidden relative">
-                <div className="flex justify-between items-start mb-8">
+              <div key={table} className="bg-white p-8 rounded-[3.5rem] border border-slate-50 shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all group overflow-hidden relative qr-card-print">
+                <div className="flex justify-between items-start mb-8 w-full no-print">
                   <div>
                     <h3 className="text-3xl font-black text-slate-900 tracking-tighter">Meja #{table}</h3>
                     <div className="flex items-center gap-2 mt-2">
@@ -373,7 +498,12 @@ export default function TableManager() {
                   </button>
                 </div>
 
-                <div className="bg-slate-50 p-8 rounded-[2.5rem] flex items-center justify-center mb-8 border-2 border-dashed border-slate-100 group-hover:border-orange-500/20 group-hover:bg-white transition-all duration-500 relative">
+                {/* Print Only Header */}
+                <div className="hidden print:block mb-4">
+                    <h3 className="text-2xl font-bold text-slate-900">MEJA {table}</h3>
+                </div>
+
+                <div className="bg-slate-50 p-8 rounded-[2.5rem] flex items-center justify-center mb-8 border-2 border-dashed border-slate-100 group-hover:border-orange-500/20 group-hover:bg-white transition-all duration-500 relative w-full aspect-square">
                   <QRCodeSVG 
                     id={`qr-${table}`}
                     value={qrUrl}
@@ -381,31 +511,28 @@ export default function TableManager() {
                     level="H"
                     includeMargin={true}
                     fgColor="#0f172a"
-                    imageSettings={{
-                      src: "/logo-kedai.png",
-                      x: undefined,
-                      y: undefined,
-                      height: 40,
-                      width: 40,
-                      excavate: true,
-                    }}
                   />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 w-full no-print">
                    <button 
                     onClick={() => downloadQR(table)}
-                    className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-sm hover:bg-orange-600 hover:-translate-y-1 shadow-lg transition-all flex items-center justify-center gap-3"
+                    className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-sm hover:bg-orange-600 hover:-translate-y-1 shadow-lg transition-all flex items-center justify-center gap-2"
                    >
-                     <Download size={20} className="stroke-[2.5px]" /> Download PNG
+                     <Download size={18} className="stroke-[2.5px]" /> PNG
                    </button>
                    <button 
                     onClick={() => window.print()}
                     className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"
                     title="Print QR"
                    >
-                     <Printer size={20} />
+                     <Printer size={18} />
                    </button>
+                </div>
+                
+                {/* Print Footer */}
+                <div className="hidden print:block mt-2">
+                    <p className="text-[10px] text-slate-400">Scan untuk pesan menu</p>
                 </div>
               </div>
             );
